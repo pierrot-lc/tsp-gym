@@ -13,12 +13,20 @@ def random_instances(
     ---
     Returns
         The TSP instances.
-            Shape of [batch_size, 2].
+            Shape of [n_instances, n_cities, 2].
     """
-    x = torch.rand(n_instances, 1, generator=generator, device=generator.device)
-    y = torch.rand(n_instances, 1, generator=generator, device=generator.device)
+    x = torch.rand(
+        (n_instances, n_cities, 1),
+        generator=generator,
+        device=generator.device,
+    )
+    y = torch.rand(
+        (n_instances, n_cities, 1),
+        generator=generator,
+        device=generator.device,
+    )
 
     x = x * (x_lim[1] - x_lim[0]) + x_lim[0]
     y = y * (y_lim[1] - y_lim[0]) + y_lim[0]
 
-    return torch.cat([x, y], dim=1)
+    return torch.cat([x, y], dim=2)
