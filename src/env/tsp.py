@@ -1,4 +1,36 @@
+import einops
 import torch
+
+
+def evaluate_solutions(
+    instances: torch.Tensor, solutions: torch.Tensor
+) -> torch.Tensor:
+    """Compute the distance of the given solution.
+
+    ---
+    Args:
+        instances: The TSP instances.
+            Shape of [n_instances, n_cities, 2].
+        solutions: The TSP solutions.
+            Shape of [n_instances, n_cities].
+
+    ---
+    Returns:
+        The distances of the solutions.
+            Shape of [n_instances, ].
+    """
+    assert instances.shape[0] == solutions.shape[0]
+    assert instances.shape[1] == solutions.shape[1]
+
+    # Get the coordinates of the cities.
+    index = einops.repeat(solutions, "i c -> i c r", r=2)
+    coordinates = torch.gather(instances, 1, index)
+
+    # Compute the distances.
+    previous_coordinates = torch.roll(coordinates, 1, dims=1)
+    distances = (previous_coordinates - coordinates).norm(p=2.0, dim=2).sum(dim=1)
+
+    return distances
 
 
 def sample_edges(
@@ -22,6 +54,8 @@ def sample_edges(
         The adjacency matrix.
             Shape of [n_instances, n_cities, n_cities].
     """
+    assert lambda_ > 0
+
     device = distances.device
     arange = torch.arange(distances.shape[1], device=device)
 
@@ -42,6 +76,7 @@ def sample_edges(
     edges.scatter_(2, closest_cities.unsqueeze(2), 1)
 
     return edges
+
 
 def compute_distances(instances: torch.Tensor) -> torch.Tensor:
     """Compute the distances between each city.

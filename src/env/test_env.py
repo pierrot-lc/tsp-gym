@@ -3,11 +3,39 @@ from itertools import product
 import pytest
 import torch
 
-from .tsp import compute_distances, random_instances, sample_edges
+from .tsp import compute_distances, evaluate_solutions, random_instances, sample_edges
 
 generator = torch.Generator(device="cpu")
 generator.manual_seed(0)
 
+
+@pytest.mark.parametrize(
+    "instances",
+    [
+        random_instances(10, 10, generator),
+        random_instances(5, 10, generator),
+        random_instances(50, 100, generator),
+    ],
+)
+def test_evaluate_solutions(instances: torch.Tensor):
+    n_instances, n_cities, _ = instances.shape
+    solutions = [
+        torch.randperm(n_cities, generator=generator) for _ in range(n_instances)
+    ]
+    solutions = torch.stack(solutions, dim=0)
+
+    values = evaluate_solutions(instances, solutions)
+
+    for instance, solution, value in zip(instances, solutions, values):
+        total_distance = 0
+        previous_city = solution[-1]
+        for city in solution:
+            total_distance += (
+                ((instance[previous_city] - instance[city]) ** 2).sum().sqrt()
+            )
+            previous_city = city
+
+        assert torch.allclose(value, total_distance)
 
 
 @pytest.mark.parametrize(
@@ -29,6 +57,7 @@ def test_sample_edges(instances: torch.Tensor, lambda_: float):
             distances_[city_id, city_id] = float("+inf")
             closest_city_id = torch.argmin(distances_[city_id])
             assert edges_[city_id, closest_city_id] == 1
+
 
 @pytest.mark.parametrize(
     "instances",
