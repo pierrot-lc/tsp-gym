@@ -17,9 +17,9 @@ let
     hydra-core
     numpy
     pytest
-    torchWithCuda
-    torchinfo
-    torchrl
+    torch-bin
+    # torchinfo
+    # torchrl
     tqdm
     wandb
   ];
