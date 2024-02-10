@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from .tsp import compute_distances, evaluate_solutions, random_instances, sample_edges
+from .env import TSPEnv
 
 generator = torch.Generator(device="cpu")
 generator.manual_seed(0)
@@ -105,3 +106,26 @@ def test_random_instances(
     y_lim_test = (y_lim[0] <= instances[:, :, 1]) & (instances[:, :, 1] <= y_lim[1])
     assert torch.all(x_lim_test)
     assert torch.all(y_lim_test)
+
+
+@pytest.mark.parametrize(
+    "instances",
+    [
+        random_instances(100, 20, generator=generator),
+        random_instances(10, 100, generator=generator),
+        random_instances(50, 50, generator=generator),
+    ],
+)
+def test_env_step(instances: torch.Tensor):
+    env = TSPEnv(instances, device="cpu", seed=0)
+    solutions = [
+        torch.randperm(env.cities, generator=generator) for _ in range(env.batch_size)
+    ]
+    solutions = torch.stack(solutions, dim=0)
+
+    for step in range(env.cities):
+        (_, partial_solutions), rewards, dones, _, _ = env.step(solutions[:, step])
+
+    assert torch.all(solutions == partial_solutions)
+    assert torch.all(evaluate_solutions(instances, solutions) == rewards)
+    assert torch.all(dones)

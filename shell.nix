@@ -7,6 +7,7 @@
   }
 }:
 let
+  torchPackage = pkgs.python311Packages.torch-bin;
   python-packages = ps: with ps; [
     pip
     setuptools
@@ -17,9 +18,9 @@ let
     hydra-core
     numpy
     pytest
-    torch-bin
-    # torchinfo
-    # torchrl
+    torchPackage
+    ( torchinfo.override { torch = torchPackage; } )
+    ( torchrl.override { torch = torchPackage; } )
     tqdm
     wandb
   ];

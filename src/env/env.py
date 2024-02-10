@@ -1,8 +1,11 @@
 import gymnasium as gym
 import gymnasium.spaces as spaces
 import torch
+from einops import repeat
 
-from .tsp import random_instances
+import itertools
+
+from .tsp import random_instances, evaluate_solutions
 
 
 class TSPEnv(gym):
@@ -33,12 +36,48 @@ class TSPEnv(gym):
         self.observation_space = self.node_space
 
         # Initialize dynamic infos.
-        self.solutions = torch.zeros(
+        self.partial_solutions = torch.zeros(
             (self.batch_size, self.cities), dtype=torch.long, device=device
         )
-        self.current_city_id = 0
+        self.partial_solutions.fill_(-1)
+        self.current_step = torch.zeros(
+            self.batch_size, dtype=torch.long, device=self.device
+        )
 
     def reset(self):
         self.instances = random_instances(self.batch_size, self.cities, self.generator)
-        self.solutions.zero_()
-        self.current_city_id = 0
+        self.partial_solutions.fill_(-1)
+        self.current_step.zero_()
+
+    def step(
+        self, city_ids: torch.Tensor
+    ) -> tuple[
+        tuple[torch.Tensor, torch.Tensor],
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        dict[str],
+    ]:
+        assert torch.all(self.current_step < self.cities)
+        assert torch.all(
+            self.partial_solutions != repeat(city_ids, "b -> b c", c=self.cities)
+        ), "Some city is already choosen in the current partial solutions."
+
+        self.partial_solutions[
+            torch.arange(self.batch_size, device=self.device), self.current_step
+        ] = city_ids
+        self.current_step += 1
+
+        dones = self.current_step == self.cities
+        rewards = torch.zeros(self.batch_size, device=self.device)
+        if torch.any(dones):
+            rewards[dones] = evaluate_solutions(
+                self.instances[dones], self.partial_solutions[dones]
+            )
+        truncated = torch.zeros(self.batch_size, dtype=torch.bool, device=self.device)
+        infos = {}
+
+        return self.render(), rewards, dones, truncated, infos
+
+    def render(self):
+        return self.instances, self.partial_solutions
