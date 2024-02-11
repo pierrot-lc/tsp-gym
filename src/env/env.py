@@ -3,12 +3,10 @@ import gymnasium.spaces as spaces
 import torch
 from einops import repeat
 
-import itertools
-
-from .tsp import random_instances, evaluate_solutions
+from .tsp import evaluate_solutions, random_instances
 
 
-class TSPEnv(gym):
+class TSPEnv(gym.Env):
     metadata = {"render.modes": ["computer"]}
 
     def __init__(self, instances: torch.Tensor, device: str, seed: int):
@@ -21,7 +19,7 @@ class TSPEnv(gym):
             device: The device to use.
             seed: The seed to initialize the random number generator.
         """
-        assert len(instances) == 3
+        assert len(instances.shape) == 3
         assert instances.shape[2] == 2
 
         super().__init__()
@@ -31,7 +29,7 @@ class TSPEnv(gym):
         self.batch_size, self.cities, _ = instances.shape
 
         # Spaces.
-        self.node_space = spaces.Box(low=0, high=1, shape=(self.n_cities, 2))
+        self.node_space = spaces.Box(low=0, high=1, shape=(self.cities, 2))
         self.action_space = spaces.Discrete(self.cities)
         self.observation_space = self.node_space
 
