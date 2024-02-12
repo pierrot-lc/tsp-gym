@@ -1,6 +1,15 @@
 {
   description = "TSP devshell";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://cuda-maintainers.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-23.11";
   };
@@ -35,16 +44,16 @@
       setuptools
       virtualenv
 
-      # einops
-      # gymnasium
-      # hydra-core
-      # numpy
-      # pytest
-      # torch-bin
+      einops
+      gymnasium
+      hydra-core
+      numpy
+      pytest
+      torch-bin
       # torchinfo
       # torchrl
-      # tqdm
-      # wandb
+      tqdm
+      wandb
     ];
 
     fhs = pkgs.buildFHSUserEnv {
