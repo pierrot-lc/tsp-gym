@@ -13,7 +13,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-23.11";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
   };
 
   outputs = { self, nixpkgs }:
@@ -63,7 +63,7 @@
       pytest
       torch
       torchinfo
-      # torchrl  # Does not exists on 23.11.
+      torchrl  # Does not exists on 23.11.
       tqdm
       wandb
     ];
