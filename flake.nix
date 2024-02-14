@@ -56,9 +56,11 @@
       setuptools
       virtualenv
 
+      beartype
       einops
       gymnasium
       hydra-core
+      jaxtyping
       numpy
       pytest
       torch
